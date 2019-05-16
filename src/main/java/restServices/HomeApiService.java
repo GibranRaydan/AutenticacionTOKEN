@@ -1,5 +1,6 @@
 package restServices;
 
+import configuration.jwtConfiguration.JsonTokenNeeded;
 import models.Device;
 import response.AuthorizationResponse;
 import response.BaseResponse;
@@ -13,6 +14,9 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.Arrays;
+import javax.ws.rs.GET;
+import mongo.mongo;
+
 
 @Path("/")
 public class HomeApiService extends BaseApiService {
@@ -21,19 +25,34 @@ public class HomeApiService extends BaseApiService {
     private static final String PASSWORD = "password";
 
     @POST
-    @Path(value = "authorization_service")
+    @Path("/authorization_service")
     @Produces(MediaType.APPLICATION_JSON)
     public Response authorizationService(@HeaderParam(USERNAME) String userName, @HeaderParam(PASSWORD) String password) {
+        System.out.println("sadfasdfasdfadfs");
         if (userName.isEmpty())
             return getResponse(new BaseResponse(USERNAME + " field cannot be empty", BaseResponse.FAILURE));
         else if (password.isEmpty())
             return getResponse(new BaseResponse(PASSWORD + " field cannot be empty", BaseResponse.FAILURE));
-        String privateKey = JwTokenHelper.getInstance().generatePrivateKey(userName, password);
+        
+        //Realizar la validacion del Usuario contra su base de datos. Debe crear una clase de negocio que se enlace con el DAO.
+        //Si la autenticacion es correcta, posteriormente puede proceder a invocar
+       
+        mongo auth= new mongo();
+        
+        boolean valido = auth.getAuthentication(userName, password);
+        System.out.println(valido);
+        if(valido == true){
+            String privateKey = JwTokenHelper.getInstance().generatePrivateKey(userName, password);
         return getResponse(new AuthorizationResponse(BaseResponse.SUCCESS, "You're authenticated successfully. Private key will be valid for 30 mins", privateKey));
+        }else{
+            return getResponse(new BaseResponse(USERNAME + "field cannot be empty 2 ddddddddd", BaseResponse.FAILURE));
+        }
+        
+        
     }
 
-    @POST
-    @Path("allDevices")
+    @GET
+    @Path("/allDevices")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getAllDevices() {
         System.out.println("Method called");
